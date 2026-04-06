@@ -44,7 +44,7 @@ function App() {
         <About darkMode={darkMode} />
         <Skills darkMode={darkMode} />
         <Projects darkMode={darkMode} />
-        <Contact />
+        <Contact darkMode={darkMode} />
       </main>
 
       {/* Footer */}

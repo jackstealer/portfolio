@@ -8,21 +8,52 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#854F6C', // Main mauve/purple (dark mode)
+          600: '#522B5B', // Medium purple (dark mode)
+          700: '#2B124C', // Dark purple (dark mode)
+          800: '#190019', // Darkest purple (dark mode)
+          900: '#0f0010',
+        },
+        accent: {
+          50: '#FBF5E9', // Cream/off-white (light mode bg)
+          100: '#B99268', // Tan/beige (light mode cards)
+          200: '#895720', // Warm brown (light mode highlights)
+          300: '#774723', // Medium brown (light mode accents)
+          400: '#391809', // Dark brown (light mode text)
+          500: '#DFB6B2', // Peachy cream
+          600: '#FBE4D8', // Light cream
+          700: '#854F6C', // Mauve (for dark mode accents)
+          800: '#522B5B', // Purple
+          900: '#2B124C', // Dark purple
         },
         dark: {
-          100: '#1f2937',
-          200: '#111827',
-          300: '#0f172a',
+          50: '#fafaf9',
+          100: '#f5f5f4',
+          200: '#e7e5e4',
+          300: '#d6d3d1',
+          400: '#a8a29e',
+          500: '#78716c',
+          600: '#57534e',
+          700: '#44403c',
+          800: '#190019', // Darkest purple
+          900: '#0f0010',
+        },
+        cream: {
+          50: '#FBF5E9', // Cream/off-white
+          100: '#B99268', // Tan/beige
+          200: '#895720', // Warm brown
+          300: '#774723', // Medium brown
+          400: '#391809', // Dark brown
+          500: '#FBE4D8', // Main light cream
+          600: '#DFB6B2', // Peachy cream
+          700: '#d4a8a4',
+          800: '#c09a96',
+          900: '#ac8c88',
         }
       },
       animation: {

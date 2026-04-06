@@ -58,8 +58,8 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
           ? darkMode
-            ? 'bg-dark-300/95 backdrop-blur-md shadow-lg'
-            : 'bg-white/95 backdrop-blur-md shadow-lg'
+            ? 'bg-primary-800/95 backdrop-blur-xl shadow-xl border-b border-white/10'
+            : 'bg-white/80 backdrop-blur-xl shadow-xl border-b border-primary-700/20'
           : 'bg-transparent'
       }`}
     >
@@ -78,17 +78,17 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
                 e.preventDefault();
                 scrollToSection('#home');
               }}
-              className={`text-xl font-bold ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              } hover:text-primary-500 transition-colors`}
+              className={`text-xl font-bold transition-colors ${
+                darkMode ? 'text-white' : 'text-primary-800'
+              } hover:text-primary-500`}
             >
-              AtulTech <span className="text-primary-500">Portfolio</span>
+              JACKSTEALER
             </a>
           </motion.div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-baseline space-x-2">
               {navItems.map((item) => (
                 <motion.a
                   key={item.name}
@@ -97,14 +97,16 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
                     e.preventDefault();
                     scrollToSection(item.href);
                   }}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     activeSection === item.href.substring(1)
-                      ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      ? darkMode
+                        ? 'text-white bg-gradient-to-r from-primary-500/20 to-primary-600/20 border border-primary-500/30'
+                        : 'text-primary-600 bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200'
                       : darkMode
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                      ? 'text-gray-300 hover:text-white hover:bg-white/5'
                       : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                   }`}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {item.name}
@@ -117,12 +119,12 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
           <div className="flex items-center space-x-2">
             <motion.button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-md ${
+              className={`p-2 rounded-xl ${
                 darkMode
-                  ? 'text-yellow-400 hover:bg-gray-700'
+                  ? 'text-yellow-400 hover:bg-white/10'
                   : 'text-gray-600 hover:bg-gray-100'
               } transition-colors`}
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.1, rotate: 15 }}
               whileTap={{ scale: 0.9 }}
             >
               {darkMode ? (
@@ -136,9 +138,9 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
             <div className="md:hidden">
               <motion.button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`p-2 rounded-md ${
+                className={`p-2 rounded-xl ${
                   darkMode
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 } transition-colors`}
                 whileHover={{ scale: 1.1 }}
@@ -163,11 +165,11 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
               className={`md:hidden ${
-                darkMode ? 'bg-dark-300' : 'bg-white'
-              } border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                darkMode ? 'bg-[#1a2e23]/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl'
+              } border-t ${darkMode ? 'border-white/10' : 'border-gray-200'} rounded-b-2xl`}
             >
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                {navItems.map((item) => (
+                {navItems.map((item, index) => (
                   <motion.a
                     key={item.name}
                     href={item.href}
@@ -175,16 +177,18 @@ const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
                       e.preventDefault();
                       scrollToSection(item.href);
                     }}
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    className={`block px-4 py-3 rounded-xl text-base font-medium transition-colors ${
                       activeSection === item.href.substring(1)
-                        ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                        ? darkMode
+                          ? 'text-white bg-gradient-to-r from-primary-500/20 to-primary-600/20 border border-primary-500/30'
+                          : 'text-primary-600 bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-200'
                         : darkMode
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        ? 'text-gray-300 hover:text-white hover:bg-white/5'
                         : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
+                    transition={{ delay: index * 0.05 }}
                   >
                     {item.name}
                   </motion.a>

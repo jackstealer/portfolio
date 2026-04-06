@@ -17,7 +17,7 @@ interface FormData {
   message: string;
 }
 
-const Contact: React.FC = () => {
+const Contact: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -63,8 +63,20 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <section id="contact" className="py-20 bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4">
+    <section id="contact" className={`relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden ${
+      darkMode ? 'bg-gradient-to-br from-primary-800 via-primary-700 to-primary-800' : 'bg-gradient-to-br from-accent-50 via-cream-50 to-accent-100'
+    } transition-colors duration-300`}>
+      {/* Background Gradient Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={`absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl ${
+          darkMode ? 'bg-primary-600/20' : 'bg-accent-100/40'
+        }`} />
+        <div className={`absolute bottom-20 -left-20 w-96 h-96 rounded-full blur-3xl ${
+          darkMode ? 'bg-primary-500/20' : 'bg-cream-200/40'
+        }`} />
+      </div>
+
+      <div className="relative container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -72,10 +84,17 @@ const Contact: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-            Get In Touch
+          <h2 className={`text-4xl font-bold mb-4 ${
+            darkMode 
+              ? 'bg-gradient-to-r from-white via-cream-500 to-cream-600 bg-clip-text text-transparent' 
+              : 'bg-gradient-to-r from-accent-400 via-accent-300 to-cream-300 bg-clip-text text-transparent'
+          }`}>
+            Get In <span className={darkMode ? 'bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent' : 'bg-gradient-to-r from-cream-200 to-accent-200 bg-clip-text text-transparent'}>Touch</span>
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <div className={`w-24 h-1 mx-auto mb-6 rounded-full ${
+            darkMode ? 'bg-gradient-to-r from-primary-500 to-primary-600' : 'bg-gradient-to-r from-cream-200 to-accent-200'
+          }`} />
+          <p className={`text-xl max-w-2xl mx-auto ${darkMode ? 'text-cream-500' : 'text-primary-800'}`}>
             Have a project in mind? Let's work together to create something amazing.
           </p>
         </motion.div>
@@ -87,11 +106,17 @@ const Contact: React.FC = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg"
+            className={`p-8 rounded-2xl shadow-xl ${
+              darkMode 
+                ? 'bg-white/5 backdrop-blur-xl border border-white/10' 
+                : 'bg-white/40 backdrop-blur-xl border border-white/20'
+            }`}
           >
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="name" className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-cream-500' : 'text-primary-800'
+                }`}>
                   Name
                 </label>
                 <input
@@ -101,13 +126,19 @@ const Contact: React.FC = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
+                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
+                  }`}
                   placeholder="Your Name"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-cream-500' : 'text-primary-800'
+                }`}>
                   Email
                 </label>
                 <input
@@ -117,13 +148,19 @@ const Contact: React.FC = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
+                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
+                  }`}
                   placeholder="your.email@example.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="subject" className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-cream-500' : 'text-primary-800'
+                }`}>
                   Subject
                 </label>
                 <input
@@ -133,13 +170,19 @@ const Contact: React.FC = () => {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
+                    darkMode 
+                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
+                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
+                  }`}
                   placeholder="What's this about?"
                 />
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="message" className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-cream-500' : 'text-primary-800'
+                }`}>
                   Message
                 </label>
                 <textarea
@@ -149,15 +192,21 @@ const Contact: React.FC = () => {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors resize-none"
+                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all resize-none ${
+                    darkMode 
+                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
+                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
+                  }`}
                   placeholder="Tell me about your project..."
                 />
               </div>
 
-              <button
+              <motion.button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:from-primary-400 disabled:to-primary-500 text-white font-medium py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
               >
                 {isLoading ? (
                   <>
@@ -170,7 +219,7 @@ const Contact: React.FC = () => {
                     <span>Send Message</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
           </motion.div>
 
@@ -183,27 +232,60 @@ const Contact: React.FC = () => {
             className="space-y-8"
           >
             <div>
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+              <h3 className={`text-2xl font-bold mb-6 ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent' 
+                  : 'text-gray-900'
+              }`}>
                 Let's Connect
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <EnvelopeIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-gray-700 dark:text-gray-300">jackstealer690@gmail.com</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <PhoneIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-gray-700 dark:text-gray-300">+91 9258298892</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <MapPinIcon className="h-6 w-6 text-blue-600" />
-                  <span className="text-gray-700 dark:text-gray-300">India</span>
-                </div>
+                <motion.div 
+                  whileHover={{ x: 5 }}
+                  className={`flex items-center space-x-3 p-3 rounded-xl ${
+                    darkMode ? 'bg-white/5' : 'bg-white/30'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${
+                    darkMode ? 'bg-gradient-to-br from-primary-600 to-primary-500' : 'bg-gradient-to-br from-accent-700 to-primary-600'
+                  }`}>
+                    <EnvelopeIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>jackstealer690@gmail.com</span>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ x: 5 }}
+                  className={`flex items-center space-x-3 p-3 rounded-xl ${
+                    darkMode ? 'bg-white/5' : 'bg-white/30'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${
+                    darkMode ? 'bg-gradient-to-br from-primary-500 to-primary-600' : 'bg-gradient-to-br from-primary-700 to-accent-700'
+                  }`}>
+                    <PhoneIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>+91 9258298892</span>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ x: 5 }}
+                  className={`flex items-center space-x-3 p-3 rounded-xl ${
+                    darkMode ? 'bg-white/5' : 'bg-white/30'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg ${
+                    darkMode ? 'bg-gradient-to-br from-primary-600 to-accent-700' : 'bg-gradient-to-br from-accent-700 to-primary-600'
+                  }`}>
+                    <MapPinIcon className="h-5 w-5 text-white" />
+                  </div>
+                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>India</span>
+                </motion.div>
               </div>
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+              <h4 className={`text-lg font-semibold mb-4 ${
+                darkMode ? 'text-white' : 'text-primary-800'
+              }`}>
                 Follow Me
               </h4>
               <div className="flex space-x-4">
@@ -213,9 +295,13 @@ const Contact: React.FC = () => {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ scale: 1.1, y: -3 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+                    className={`p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
+                      darkMode 
+                        ? 'bg-white/5 backdrop-blur-xl border border-white/10' 
+                        : 'bg-white/40 backdrop-blur-xl border border-white/20'
+                    }`}
                   >
                     <span className="text-2xl">{link.icon}</span>
                   </motion.a>
@@ -223,15 +309,24 @@ const Contact: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h4 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className={`p-6 rounded-2xl ${
+                darkMode 
+                  ? 'bg-gradient-to-br from-primary-600/10 to-primary-500/10 border border-primary-600/20' 
+                  : 'bg-gradient-to-br from-accent-700/10 to-primary-600/10 border border-accent-700/30'
+              }`}
+            >
+              <h4 className={`text-lg font-semibold mb-2 ${
+                darkMode ? 'text-white' : 'text-primary-800'
+              }`}>
                 Available for Work
               </h4>
-              <p className="text-gray-700 dark:text-gray-300">
+              <p className={darkMode ? 'text-cream-500' : 'text-primary-700'}>
                 I'm currently available for freelance projects and full-time opportunities. 
                 Let's create something amazing together!
               </p>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
