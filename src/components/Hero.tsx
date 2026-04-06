@@ -185,7 +185,7 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
           >
             {/* Name with Gradient Text */}
             <motion.h1 
-              className={`text-5xl sm:text-6xl lg:text-7xl font-bold mb-4 ${
+              className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 ${
                 darkMode 
                   ? 'bg-gradient-to-r from-white via-cream-500 to-cream-600 bg-clip-text text-transparent'
                   : 'bg-gradient-to-r from-accent-400 via-accent-300 to-cream-300 bg-clip-text text-transparent'
@@ -208,19 +208,19 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
               transition={{ duration: 0.8, delay: 0.9 }}
               className="mb-6"
             >
-              <div className={`backdrop-blur-xl rounded-2xl px-8 py-4 shadow-2xl ${
+              <div className={`backdrop-blur-xl rounded-2xl px-6 py-3 shadow-2xl ${
                 darkMode 
                   ? 'bg-white/5 border border-white/10'
                   : 'bg-white/40 border border-white/20'
               }`}>
-                <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 ${
+                <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 ${
                   darkMode
                     ? 'bg-gradient-to-r from-primary-500 via-accent-700 to-primary-600 bg-clip-text text-transparent'
                     : 'bg-gradient-to-r from-cream-200 via-accent-200 to-cream-300 bg-clip-text text-transparent'
                 }`}>
                   AI/ML Engineer & Full-Stack Developer
                 </h2>
-                <p className={`text-lg ${darkMode ? 'text-cream-500' : 'text-accent-300'}`}>
+                <p className={`text-base ${darkMode ? 'text-cream-500' : 'text-accent-300'}`}>
                   Computer Science Engineering Student
                 </p>
               </div>
@@ -228,7 +228,7 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
 
             {/* Description with Glassmorphism */}
             <motion.div
-              className={`backdrop-blur-xl rounded-2xl p-6 mb-10 shadow-2xl ${
+              className={`backdrop-blur-xl rounded-2xl p-5 mb-8 shadow-2xl ${
                 darkMode 
                   ? 'bg-white/5 border border-white/10'
                   : 'bg-white/40 border border-white/20'
@@ -237,17 +237,17 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.1 }}
             >
-              <p className={`text-lg sm:text-xl leading-relaxed ${
+              <p className={`text-base sm:text-lg leading-relaxed ${
                 darkMode ? 'text-cream-500' : 'text-accent-300'
               }`}>
                 Building intelligent systems with <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>ML & Gen AI</span>. 
-                Specializing in <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Python</span> & <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>React</span> to create impactful solutions.
+                Specializing in <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Python</span> & <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>React</span>.
               </p>
             </motion.div>
 
             {/* CTA Buttons with Enhanced Styling */}
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-12"
+              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center mb-8"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.3 }}
@@ -257,7 +257,7 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
                   const element = document.querySelector('#projects');
                   if (element) element.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`relative group px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg ${
+                className={`relative group px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 shadow-lg ${
                   darkMode
                     ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-accent-700 text-white shadow-primary-600/50 hover:shadow-2xl hover:shadow-primary-600/70'
                     : 'bg-gradient-to-r from-cream-200 to-accent-200 hover:from-accent-200 hover:to-cream-300 text-white shadow-cream-200/50 hover:shadow-2xl hover:shadow-cream-200/70'
@@ -276,7 +276,7 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
                   const element = document.querySelector('#contact');
                   if (element) element.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`backdrop-blur-xl px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-2xl ${
+                className={`backdrop-blur-xl px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-2xl ${
                   darkMode
                     ? 'bg-white/10 border-2 border-primary-600 text-white hover:bg-primary-600/20 hover:shadow-primary-600/30'
                     : 'bg-white/40 border-2 border-cream-200 text-accent-400 hover:bg-cream-200/20 hover:shadow-cream-200/30'
@@ -293,7 +293,7 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.5 }}
-              className="flex flex-wrap justify-center lg:justify-start gap-4 items-center"
+              className="flex flex-wrap justify-center lg:justify-start gap-3 items-center"
             >
               {[
                 { icon: '🐍', name: 'Python', color: darkMode ? 'from-yellow-400 to-yellow-600' : 'from-yellow-500 to-yellow-700' },
@@ -308,13 +308,13 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 1.7 + index * 0.1 }}
                   whileHover={{ scale: 1.1, y: -5 }}
-                  className={`backdrop-blur-xl rounded-xl p-4 transition-all duration-300 shadow-lg hover:shadow-2xl group cursor-pointer ${
+                  className={`backdrop-blur-xl rounded-xl p-3 transition-all duration-300 shadow-lg hover:shadow-2xl group cursor-pointer ${
                     darkMode 
                       ? 'bg-white/5 border border-white/10 hover:bg-white/10'
                       : 'bg-white/30 border border-white/20 hover:bg-white/50'
                   }`}
                 >
-                  <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">{tech.icon}</div>
+                  <div className="text-3xl mb-1 group-hover:scale-110 transition-transform duration-300">{tech.icon}</div>
                   <p className={`text-xs font-semibold bg-gradient-to-r ${tech.color} bg-clip-text text-transparent`}>{tech.name}</p>
                 </motion.div>
               ))}
