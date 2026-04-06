@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -49,6 +50,9 @@ function App() {
 
       {/* Footer */}
       <Footer darkMode={darkMode} />
+
+      {/* Vercel Analytics */}
+      <Analytics />
     </div>
   );
 }
