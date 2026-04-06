@@ -240,8 +240,8 @@ const Hero: React.FC<HeroProps> = ({ darkMode }) => {
               <p className={`text-lg sm:text-xl leading-relaxed ${
                 darkMode ? 'text-cream-500' : 'text-accent-300'
               }`}>
-                Building intelligent systems with <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Machine Learning</span> & <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Generative AI</span>. 
-                Specializing in <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Python</span>, <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>React</span>, and modern frameworks to create impactful solutions.
+                Building intelligent systems with <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>ML & Gen AI</span>. 
+                Specializing in <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Python</span> & <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>React</span> to create impactful solutions.
               </p>
             </motion.div>
 
