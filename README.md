@@ -2,6 +2,17 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Deploying to AWS (Amplify Hosting)
+
+The site is static, so it is hosted on AWS Amplify, which builds it with the settings in `amplify.yml`.
+
+1. Push this repo to GitHub.
+2. In the AWS console open **Amplify → Create new app → GitHub**, authorise it, pick this repo and the `main` branch, and keep the detected build settings.
+3. Amplify gives you a `https://main.<id>.amplifyapp.com` URL. Every push to `main` redeploys. Custom domains live under **Hosting → Custom domains**.
+
+The contact form posts to `/api/contact`, which a static host does not serve. To make it work, deploy an endpoint for it and set
+`REACT_APP_CONTACT_API` to its URL under **Hosting → Environment variables**, then redeploy.
+
 ## Available Scripts
 
 In the project directory, you can run:

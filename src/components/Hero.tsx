@@ -1,378 +1,264 @@
-import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion, Transition } from 'framer-motion';
+import { ArrowDownLeftIcon } from '@heroicons/react/24/outline';
+import ParticleField from './ParticleField';
+
+const NAME = 'ATUL';
+const WORD = 'PORTFOLIO';
+// The falling dot becomes a "!" whose stem turns into this letter: the I if the name has one, else the last letter.
+const STEM = NAME.includes('I') ? NAME.indexOf('I') : NAME.length - 1;
+const LEFT = STEM; // letters that spill out of the "!" to its left
+const RIGHT = NAME.length - 1 - STEM; // letters that tumble in from the right
+const STAGGER = 0.12;
+const MORPH_STAGGER = 0.08;
+const INTRO_SCALE = 0.5; // word size during the intro, relative to its resting size
+
+// Cue times in seconds after load.
+const T = (() => {
+  const stem = 1.05; // "!" stem drops onto the bounced dot
+  const spill = 1.45; // stem tips over, left letters spill out
+  const right = spill + 0.15 + LEFT * STAGGER + 0.3; // stem rights itself, right letters tumble in
+  const bang = right + RIGHT * STAGGER + 0.2; // "!" turns into its letter
+  const morph = bang + 0.45; // name flips letter by letter into WORD
+  const settle = morph + WORD.length * MORPH_STAGGER + 0.4; // word moves into the hero layout
+  return { stem, spill, right, bang, morph, settle, particles: settle + 0.35, done: settle + 1.1 };
+})();
+
+const enterAt = (i: number) =>
+  i < STEM ? T.spill + 0.15 + (STEM - 1 - i) * STAGGER : T.right + (i - STEM - 1) * STAGGER;
+const morphAt = (i: number) => T.morph + i * MORPH_STAGGER;
+
+const CUES = Array.from(
+  new Set([
+    T.stem, T.spill, T.right, T.bang, T.settle, T.particles, T.done,
+    ...Array.from(NAME, (_, i) => enterAt(i)),
+    ...Array.from(WORD, (_, i) => morphAt(i)),
+  ])
+).sort((a, b) => a - b);
+
+const TRACKING = -0.02; // em; must match the h1's tracking class
+const ENTRY = {
+  left: { width: '0em', opacity: 0, x: '0.9em', y: '-0.25em', rotate: -220, scale: 0.4 },
+  right: { width: '0em', opacity: 0, x: '1.2em', y: '-1.1em', rotate: 200, scale: 0.6 },
+  grow: { width: '0em', opacity: 0 },
+};
+type Entry = keyof typeof ENTRY;
+const SETTLED = { opacity: 1, x: '0em', y: '0em', rotate: 0, scale: 1 };
+const SPRING: Transition = { type: 'spring', stiffness: 170, damping: 17 };
+const EASE: [number, number, number, number] = [0.76, 0, 0.24, 1];
+
+const DOT_Y = ['-120vh', '0vh', '-26vh', '0vh', '-9vh', '0vh', '-2.5vh', '0vh'];
+const DOT_BOUNCE: Transition = {
+  duration: T.stem - 0.05,
+  times: [0, 0.38, 0.55, 0.7, 0.8, 0.89, 0.95, 1],
+  ease: ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn'],
+};
+const STEM_TILT = [0, -70, -70, 0];
+const STEM_MOTION: Transition = {
+  y: { type: 'spring', stiffness: 300, damping: 14 },
+  opacity: { duration: 0.15 },
+  rotate: { duration: T.right - T.spill, times: [0, 0.22, 0.7, 1], ease: 'easeInOut' },
+};
+
+// One character. Remount it with a new key to flip the next character in.
+const Glyph: React.FC<{ char: string; flip: boolean; axis: 'x' | 'y' }> = ({ char, flip, axis }) => (
+  <motion.span
+    className="inline-block text-chrome"
+    style={flip ? { transformPerspective: 500 } : undefined}
+    initial={flip ? (axis === 'x' ? { rotateX: -90, opacity: 0 } : { rotateY: -90, opacity: 0 }) : false}
+    animate={{ rotateX: 0, rotateY: 0, opacity: 1 }}
+    transition={{ duration: 0.3, ease: [0.2, 0.7, 0.3, 1] }}
+  >
+    {char}
+  </motion.span>
+);
+
+const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
 interface HeroProps {
-  darkMode: boolean;
+  onIntroDone: () => void;
 }
 
-const Hero: React.FC<HeroProps> = ({ darkMode }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
+  const reduced = useReducedMotion();
+  const [clock, setClock] = useState(-1); // time of the latest cue fired
+  const at = (t: number) => clock >= t;
+  const heroRef = useRef<HTMLElement>(null);
+  const blockRef = useRef<HTMLDivElement>(null);
+  const wordRef = useRef<HTMLHeadingElement>(null);
+  const [offset, setOffset] = useState<number | null>(null);
+  const [widths, setWidths] = useState<Record<string, number>>({});
 
+  // Slot widths in em, from the font's own metrics. framer's width:'auto' measures with transforms applied,
+  // which is wrong inside the scaled, spinning word.
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    document.fonts?.load('900 100px Inter').then(() => {
+      const ctx = document.createElement('canvas').getContext('2d');
+      if (!ctx) return;
+      ctx.font = '900 100px Inter';
+      const w: Record<string, number> = {};
+      Array.from(new Set(NAME + WORD + '!')).forEach((ch) => (w[ch] = ctx.measureText(ch).width / 100 + TRACKING));
+      setWidths(w);
+    });
+  }, []);
+  const widthOf = (ch: string) => `${widths[ch] ?? 0.7}em`;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Star and shooting star arrays
-    const stars: Array<{
-      x: number;
-      y: number;
-      size: number;
-      speed: number;
-      opacity: number;
-      twinkleSpeed: number;
-    }> = [];
-
-    const shootingStars: Array<{
-      x: number;
-      y: number;
-      length: number;
-      speed: number;
-      angle: number;
-      opacity: number;
-      life: number;
-    }> = [];
-
-    // Initialize stars
-    for (let i = 0; i < 150; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 1,
-        speed: Math.random() * 0.5 + 0.1,
-        opacity: Math.random() * 0.8 + 0.2,
-        twinkleSpeed: Math.random() * 0.02 + 0.01,
-      });
+  // Fire each cue on schedule; reduced-motion visitors get the final frame straight away.
+  useEffect(() => {
+    if (reduced) {
+      setClock(Infinity);
+      onIntroDone();
+      return;
     }
+    const ids = CUES.map((t) =>
+      window.setTimeout(() => {
+        setClock(t);
+        if (t === T.done) onIntroDone();
+      }, t * 1000)
+    );
+    return () => ids.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduced]);
 
-    // Animation loop
-    let animationId: number;
-    let time = 0;
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.016;
-
-      // Draw stars with twinkling effect
-      stars.forEach((star) => {
-        ctx.save();
-        const twinkle = Math.sin(time * star.twinkleSpeed * 100) * 0.3 + 0.7;
-        ctx.globalAlpha = star.opacity * twinkle;
-        ctx.fillStyle = darkMode ? '#ffffff' : '#1e3a8a';
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // Move stars slightly for parallax effect
-        star.y += star.speed * 0.1;
-        star.x += Math.sin(time * 0.1) * 0.1;
-
-        // Reset star position if it goes off screen
-        if (star.y > canvas.height) {
-          star.y = -5;
-          star.x = Math.random() * canvas.width;
-        }
-      });
-
-      // Create new shooting stars occasionally
-      if (Math.random() < 0.003) {
-        shootingStars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height * 0.3,
-          length: Math.random() * 80 + 50,
-          speed: Math.random() * 8 + 12,
-          angle: Math.random() * Math.PI * 0.3 + Math.PI * 0.15,
-          opacity: 1,
-          life: 1,
-        });
-      }
-
-      // Draw and update shooting stars
-      shootingStars.forEach((star, index) => {
-        ctx.save();
-        ctx.globalAlpha = star.opacity * star.life;
-        ctx.strokeStyle = darkMode ? '#ffffff' : '#3b82f6';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-
-        const endX = star.x + Math.cos(star.angle) * star.length;
-        const endY = star.y + Math.sin(star.angle) * star.length;
-
-        // Create gradient for shooting star trail
-        const gradient = ctx.createLinearGradient(star.x, star.y, endX, endY);
-        gradient.addColorStop(0, darkMode ? 'rgba(255, 255, 255, 0)' : 'rgba(59, 130, 246, 0)');
-        gradient.addColorStop(1, darkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(59, 130, 246, 1)');
-        ctx.strokeStyle = gradient;
-
-        ctx.beginPath();
-        ctx.moveTo(star.x, star.y);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.restore();
-
-        // Update shooting star position
-        star.x += Math.cos(star.angle) * star.speed;
-        star.y += Math.sin(star.angle) * star.speed;
-        star.life -= 0.008;
-
-        // Remove dead shooting stars
-        if (star.life <= 0) {
-          shootingStars.splice(index, 1);
-        }
-      });
-
-      animationId = requestAnimationFrame(animate);
+  // During the intro the word sits at the centre of the hero; measure how far that is from where it rests.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const hero = heroRef.current;
+      const block = blockRef.current;
+      const word = wordRef.current;
+      if (!hero || !block || !word) return;
+      // offsetTop ignores transforms, so this is the resting position.
+      setOffset(hero.clientHeight / 2 - (block.offsetTop + word.offsetTop + word.offsetHeight / 2));
     };
+    measure();
+    document.fonts?.ready.then(measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
-    animate();
+  const settled = at(T.settle);
+  const slots: React.ReactNode[] = [];
+  for (let i = 0; i < Math.max(NAME.length, WORD.length); i++) {
+    const morphed = at(morphAt(i));
+    const visible =
+      i < NAME.length ? (i === STEM || at(enterAt(i))) && (i < WORD.length || !morphed) : morphed;
+    if (!visible) continue;
+    const char = morphed ? WORD[i] : NAME[i];
+    const from: Entry | null = i >= NAME.length ? 'grow' : i < STEM ? 'left' : i > STEM ? 'right' : null;
+    const isStem = i === STEM;
 
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(animationId);
-    };
-  }, [darkMode]);
+    slots.push(
+      <motion.span
+        key={i}
+        className="relative inline-block"
+        initial={from ? ENTRY[from] : false}
+        animate={{ ...SETTLED, width: widthOf(isStem && !at(T.bang) ? '!' : char) }}
+        transition={SPRING}
+      >
+        {isStem && !at(T.bang) ? (
+          <span className="invisible">!</span>
+        ) : (
+          <Glyph key={char} char={char} flip={morphed || isStem} axis={isStem && !morphed ? 'y' : 'x'} />
+        )}
 
-  const scrollToNext = () => {
-    const element = document.querySelector('#about');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+        {/* The "!": a dot that bounces in, then a stem that drops onto it. Two copies of the glyph, clipped at the
+            gap between stem (0.14-0.64em) and dot (0.68-0.87em) in Inter Black's line box. */}
+        {isStem && !at(T.morph) && (
+          <>
+            <motion.span
+              className="absolute inset-0 text-center text-chrome"
+              style={{ clipPath: 'inset(0 0 34% 0)', transformOrigin: '50% 64%' }}
+              initial={{ y: '-1.5em', opacity: 0, rotate: 0 }}
+              animate={
+                at(T.bang)
+                  ? { y: '0em', opacity: 0, rotate: 0 }
+                  : at(T.stem)
+                  ? { y: '0em', opacity: 1, rotate: at(T.spill) && LEFT > 0 ? STEM_TILT : 0 }
+                  : { y: '-1.5em', opacity: 0, rotate: 0 }
+              }
+              transition={STEM_MOTION}
+            >
+              !
+            </motion.span>
+            <motion.span
+              className="absolute inset-0 text-center text-gray-100"
+              style={{ clipPath: 'inset(66% 0 0 0)' }}
+              initial={{ y: DOT_Y[0], opacity: 1 }}
+              animate={at(T.bang) ? { y: '8vh', opacity: 0 } : { y: DOT_Y, opacity: 1 }}
+              transition={at(T.bang) ? { duration: 0.35, ease: 'easeIn' } : DOT_BOUNCE}
+            >
+              !
+            </motion.span>
+          </>
+        )}
+      </motion.span>
+    );
+  }
 
   return (
-    <section id="home" className={`relative min-h-screen flex items-center justify-center overflow-hidden ${
-      darkMode ? 'bg-gradient-to-br from-primary-800 via-primary-700 to-primary-800' : 'bg-gradient-to-br from-accent-50 via-cream-50 to-accent-100'
-    }`}>
-      {/* Animated Background */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
+    <section
+      ref={heroRef}
+      id="home"
+      className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-end overflow-hidden bg-ink pb-[6vh]"
+    >
+      {/* Spotlight; it pulses as the dot lands. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
+        }}
+        initial={{ opacity: reduced ? 0.7 : 0 }}
+        animate={{ opacity: reduced ? 0.7 : [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] }}
+        transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
       />
 
-      {/* Gradient Orbs for Aesthetic Effect */}
-      <div className={`absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl animate-pulse-slow ${
-        darkMode ? 'bg-primary-600/30' : 'bg-accent-100/50'
-      }`}></div>
-      <div className={`absolute bottom-20 right-20 w-96 h-96 rounded-full blur-3xl animate-pulse-slow ${
-        darkMode ? 'bg-accent-800/30' : 'bg-cream-200/50'
-      }`} style={{ animationDelay: '1s' }}></div>
-      <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl animate-pulse-slow ${
-        darkMode ? 'bg-primary-700/20' : 'bg-accent-200/40'
-      }`} style={{ animationDelay: '2s' }}></div>
+      <ParticleField start={at(T.particles)} reduced={!!reduced} />
 
-      {/* Content */}
-      <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-screen">
-          {/* Left Column - Text Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="text-center lg:text-left"
-          >
-            {/* Name with Gradient Text */}
-            <motion.h1 
-              className={`text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 ${
-                darkMode 
-                  ? 'bg-gradient-to-r from-white via-cream-500 to-cream-600 bg-clip-text text-transparent'
-                  : 'bg-gradient-to-r from-accent-400 via-accent-300 to-cream-300 bg-clip-text text-transparent'
-              }`}
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              Hi, I'm <span className={`${
-                darkMode 
-                  ? 'bg-gradient-to-r from-primary-500 to-accent-700 bg-clip-text text-transparent'
-                  : 'bg-gradient-to-r from-cream-200 to-accent-200 bg-clip-text text-transparent'
-              }`}>Atul Raj Gautam</span>
-            </motion.h1>
-
-            {/* Role with Glassmorphism Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.9 }}
-              className="mb-6"
-            >
-              <div className={`backdrop-blur-xl rounded-2xl px-6 py-3 shadow-2xl ${
-                darkMode 
-                  ? 'bg-white/5 border border-white/10'
-                  : 'bg-white/40 border border-white/20'
-              }`}>
-                <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-1 ${
-                  darkMode
-                    ? 'bg-gradient-to-r from-primary-500 via-accent-700 to-primary-600 bg-clip-text text-transparent'
-                    : 'bg-gradient-to-r from-cream-200 via-accent-200 to-cream-300 bg-clip-text text-transparent'
-                }`}>
-                  AI/ML Engineer & Full-Stack Developer
-                </h2>
-                <p className={`text-base ${darkMode ? 'text-cream-500' : 'text-accent-300'}`}>
-                  Computer Science Engineering Student
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Description with Glassmorphism */}
-            <motion.div
-              className={`backdrop-blur-xl rounded-2xl p-5 mb-8 shadow-2xl ${
-                darkMode 
-                  ? 'bg-white/5 border border-white/10'
-                  : 'bg-white/40 border border-white/20'
-              }`}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.1 }}
-            >
-              <p className={`text-base sm:text-lg leading-relaxed ${
-                darkMode ? 'text-cream-500' : 'text-accent-300'
-              }`}>
-                Building intelligent systems with <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>ML & Gen AI</span>. 
-                Specializing in <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>Python</span> & <span className={`font-semibold ${darkMode ? 'text-primary-500' : 'text-cream-200'}`}>React</span>.
-              </p>
-            </motion.div>
-
-            {/* CTA Buttons with Enhanced Styling */}
-            <motion.div
-              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center mb-8"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.3 }}
-            >
-              <motion.button
-                onClick={() => {
-                  const element = document.querySelector('#projects');
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`relative group px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 shadow-lg ${
-                  darkMode
-                    ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-accent-700 text-white shadow-primary-600/50 hover:shadow-2xl hover:shadow-primary-600/70'
-                    : 'bg-gradient-to-r from-cream-200 to-accent-200 hover:from-accent-200 hover:to-cream-300 text-white shadow-cream-200/50 hover:shadow-2xl hover:shadow-cream-200/70'
-                }`}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="relative z-10">View My Projects</span>
-                <div className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur ${
-                  darkMode ? 'bg-gradient-to-r from-primary-500 to-accent-700' : 'bg-gradient-to-r from-accent-100 to-cream-100'
-                }`}></div>
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  const element = document.querySelector('#contact');
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`backdrop-blur-xl px-6 py-3 rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-2xl ${
-                  darkMode
-                    ? 'bg-white/10 border-2 border-primary-600 text-white hover:bg-primary-600/20 hover:shadow-primary-600/30'
-                    : 'bg-white/40 border-2 border-cream-200 text-accent-400 hover:bg-cream-200/20 hover:shadow-cream-200/30'
-                }`}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Get In Touch
-              </motion.button>
-            </motion.div>
-
-            {/* Tech Stack with Glassmorphism Cards */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.5 }}
-              className="flex flex-wrap justify-center lg:justify-start gap-3 items-center"
-            >
-              {[
-                { icon: '🐍', name: 'Python', color: darkMode ? 'from-yellow-400 to-yellow-600' : 'from-yellow-500 to-yellow-700' },
-                { icon: '⚛️', name: 'React', color: darkMode ? 'from-blue-400 to-blue-600' : 'from-blue-500 to-blue-700' },
-                { icon: '🤖', name: 'AI/ML', color: darkMode ? 'from-primary-500 to-accent-700' : 'from-accent-700 to-primary-600' },
-                { icon: '🟢', name: 'Node.js', color: darkMode ? 'from-green-400 to-green-600' : 'from-green-500 to-green-700' },
-                { icon: '🗄️', name: 'Databases', color: darkMode ? 'from-primary-600 to-primary-500' : 'from-primary-700 to-accent-700' },
-              ].map((tech, index) => (
-                <motion.div
-                  key={tech.name}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: 1.7 + index * 0.1 }}
-                  whileHover={{ scale: 1.1, y: -5 }}
-                  className={`backdrop-blur-xl rounded-xl p-3 transition-all duration-300 shadow-lg hover:shadow-2xl group cursor-pointer ${
-                    darkMode 
-                      ? 'bg-white/5 border border-white/10 hover:bg-white/10'
-                      : 'bg-white/30 border border-white/20 hover:bg-white/50'
-                  }`}
-                >
-                  <div className="text-3xl mb-1 group-hover:scale-110 transition-transform duration-300">{tech.icon}</div>
-                  <p className={`text-xs font-semibold bg-gradient-to-r ${tech.color} bg-clip-text text-transparent`}>{tech.name}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          {/* Right Column - Profile Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex justify-center lg:justify-end"
-          >
-            <div className="relative">
-              <div className={`absolute inset-0 w-80 h-80 sm:w-96 sm:h-96 rounded-full blur-2xl animate-pulse ${
-                darkMode ? 'bg-primary-600/50' : 'bg-cream-200/60'
-              }`}></div>
-              <div className={`relative w-80 h-80 sm:w-96 sm:h-96 rounded-full overflow-hidden border-4 shadow-2xl ${
-                darkMode ? 'border-primary-600 shadow-primary-600/50' : 'border-cream-200 shadow-cream-200/50'
-              }`}>
-                <img 
-                  src="/profile.jpeg"
-                  alt="Atul Raj Gautam"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://ui-avatars.com/api/?name=Atul+Raj+Gautam&size=400&background=ff8c42&color=fff&bold=true';
-                  }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Scroll indicator with Glow */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 2 }}
+      <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
+        <motion.h1
+          ref={wordRef}
+          aria-label="Atul Raj Gautam, Portfolio"
+          className="whitespace-nowrap text-center text-[clamp(3.4rem,12.6vw,13.5rem)] font-black leading-none tracking-[-0.02em]"
+          style={{ opacity: offset === null ? 0 : 1 }}
+          initial={false}
+          animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
+          transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
         >
-          <motion.button
-            onClick={scrollToNext}
-            className="relative group"
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <div className={`absolute inset-0 rounded-full blur-xl group-hover:blur-2xl transition-all duration-300 ${
-              darkMode ? 'bg-primary-600/50' : 'bg-cream-200/50'
-            }`}></div>
-            <ChevronDownIcon className={`relative h-8 w-8 transition-colors ${
-              darkMode ? 'text-primary-500 group-hover:text-primary-400' : 'text-cream-200 group-hover:text-accent-200'
-            }`} />
-          </motion.button>
+          <span aria-hidden>{slots}</span>
+        </motion.h1>
+
+        <motion.div
+          // w-0 min-w-full: span the word's width without widening the block
+          className="mt-3 flex w-0 min-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5"
+          initial={false}
+          animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.8, delay: reduced ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
+            <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
+            <span className="font-light italic text-gray-200">Developer</span>
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Scroll to about"
+              onClick={() => scrollTo('about')}
+              className="grid h-11 w-11 place-items-center rounded-full border border-white/15 text-white transition hover:border-white/40 hover:bg-white/5"
+            >
+              <ArrowDownLeftIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('contact')}
+              className="h-11 rounded-full border border-white/15 px-6 text-[15px] italic text-white transition hover:border-white/40 hover:bg-white/5"
+            >
+              Contact
+            </button>
+          </div>
         </motion.div>
       </div>
-
-      {/* Gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40 pointer-events-none" />
     </section>
   );
 };

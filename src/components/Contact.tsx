@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { EnvelopeIcon, PhoneIcon, MapPinIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
+import SectionHeading from './SectionHeading';
+
+// Set REACT_APP_CONTACT_API at build time to point the form at a deployed endpoint.
+const CONTACT_API = process.env.REACT_APP_CONTACT_API || '/api/contact';
 
 const socialLinks = [
-  { name: 'GitHub', icon: '🐙', url: 'https://github.com/jackstealer' },
-  { name: 'LinkedIn', icon: '💼', url: 'https://www.linkedin.com/in/atul-raj-gautam-04b170238/' },
-  { name: 'Twitter', icon: '🐦', url: 'https://x.com/jackstealer690' },
-  { name: 'Email', icon: '📧', url: 'mailto:jackstealer690@gmail.com' },
+  { name: 'GitHub', url: 'https://github.com/jackstealer' },
+  { name: 'LinkedIn', url: 'https://www.linkedin.com/in/atul-raj-gautam-04b170238/' },
+  { name: 'X / Twitter', url: 'https://x.com/jackstealer690' },
+];
+
+const details = [
+  { label: 'Email', value: 'jackstealer690@gmail.com', href: 'mailto:jackstealer690@gmail.com' },
+  { label: 'Phone', value: '+91 9258298892', href: 'tel:+919258298892' },
+  { label: 'Location', value: 'India' },
 ];
 
 interface FormData {
@@ -17,37 +26,33 @@ interface FormData {
   message: string;
 }
 
-const Contact: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
+const fields: { name: keyof FormData; label: string; type?: string; placeholder: string }[] = [
+  { name: 'name', label: 'Name', placeholder: 'Your name' },
+  { name: 'email', label: 'Email', type: 'email', placeholder: 'your.email@example.com' },
+  { name: 'subject', label: 'Subject', placeholder: "What's this about?" },
+];
 
+const inputClass =
+  'w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-gray-600 outline-none transition-colors focus:border-white/40';
+
+const Contact: React.FC = () => {
+  const [formData, setFormData] = useState<FormData>({ name: '', email: '', subject: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch(CONTACT_API, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       if (response.ok) {
         toast.success('Message sent successfully!');
         setFormData({ name: '', email: '', subject: '', message: '' });
@@ -63,272 +68,112 @@ const Contact: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
   };
 
   return (
-    <section id="contact" className={`relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden ${
-      darkMode ? 'bg-gradient-to-br from-primary-800 via-primary-700 to-primary-800' : 'bg-gradient-to-br from-accent-50 via-cream-50 to-accent-100'
-    } transition-colors duration-300`}>
-      {/* Background Gradient Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className={`absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl ${
-          darkMode ? 'bg-primary-600/20' : 'bg-accent-100/40'
-        }`} />
-        <div className={`absolute bottom-20 -left-20 w-96 h-96 rounded-full blur-3xl ${
-          darkMode ? 'bg-primary-500/20' : 'bg-cream-200/40'
-        }`} />
-      </div>
-
-      <div className="relative container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className={`text-4xl font-bold mb-4 ${
-            darkMode 
-              ? 'bg-gradient-to-r from-white via-cream-500 to-cream-600 bg-clip-text text-transparent' 
-              : 'bg-gradient-to-r from-accent-400 via-accent-300 to-cream-300 bg-clip-text text-transparent'
-          }`}>
-            Get In <span className={darkMode ? 'bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent' : 'bg-gradient-to-r from-cream-200 to-accent-200 bg-clip-text text-transparent'}>Touch</span>
-          </h2>
-          <div className={`w-24 h-1 mx-auto mb-6 rounded-full ${
-            darkMode ? 'bg-gradient-to-r from-primary-500 to-primary-600' : 'bg-gradient-to-r from-cream-200 to-accent-200'
-          }`} />
-          <p className={`text-xl max-w-2xl mx-auto ${darkMode ? 'text-cream-500' : 'text-primary-800'}`}>
-            Have a project in mind? Let's work together to create something amazing.
+    <section id="contact" className="relative px-6 py-28 lg:px-10 lg:py-40">
+      <div className="mx-auto grid max-w-[1150px] gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+        <div>
+          <SectionHeading eyebrow="Get in touch" title="Contact" />
+          <p className="mt-10 max-w-md text-2xl font-light leading-snug text-gray-300">
+            Have a project in mind? <span className="font-semibold text-white">Let's build something</span>{' '}
+            <span className="italic">intelligent</span> together.
           </p>
-        </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-          {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className={`p-8 rounded-2xl shadow-xl ${
-              darkMode 
-                ? 'bg-white/5 backdrop-blur-xl border border-white/10' 
-                : 'bg-white/40 backdrop-blur-xl border border-white/20'
-            }`}
-          >
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="name" className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-cream-500' : 'text-primary-800'
-                }`}>
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
-                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
-                  }`}
-                  placeholder="Your Name"
-                />
+          <dl className="mt-12">
+            {details.map((d) => (
+              <div key={d.label} className="grid grid-cols-[6rem_1fr] border-t border-white/[0.07] py-4 text-[15px]">
+                <dt className="text-xs uppercase tracking-[0.2em] text-muted">{d.label}</dt>
+                <dd className="text-gray-200">
+                  {d.href ? (
+                    <a href={d.href} className="transition-colors hover:text-white">
+                      {d.value}
+                    </a>
+                  ) : (
+                    d.value
+                  )}
+                </dd>
               </div>
+            ))}
+          </dl>
 
-              <div>
-                <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-cream-500' : 'text-primary-800'
-                }`}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
-                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
-                  }`}
-                  placeholder="your.email@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="subject" className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-cream-500' : 'text-primary-800'
-                }`}>
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  required
-                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${
-                    darkMode 
-                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
-                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
-                  }`}
-                  placeholder="What's this about?"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="message" className={`block text-sm font-medium mb-2 ${
-                  darkMode ? 'text-cream-500' : 'text-primary-800'
-                }`}>
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  required
-                  rows={5}
-                  className={`w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all resize-none ${
-                    darkMode 
-                      ? 'bg-white/5 border border-white/20 text-white placeholder-gray-400' 
-                      : 'bg-white border border-primary-700/30 text-primary-800 placeholder-primary-700/50'
-                  }`}
-                  placeholder="Tell me about your project..."
-                />
-              </div>
-
-              <motion.button
-                type="submit"
-                disabled={isLoading}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:from-primary-400 disabled:to-primary-500 text-white font-medium py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+          <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
+            {socialLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white"
               >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Sending...</span>
-                  </>
-                ) : (
-                  <>
-                    <PaperAirplaneIcon className="h-5 w-5" />
-                    <span>Send Message</span>
-                  </>
-                )}
-              </motion.button>
-            </form>
-          </motion.div>
+                {link.name} <ArrowUpRightIcon className="h-3.5 w-3.5" />
+              </a>
+            ))}
+          </div>
 
-          {/* Contact Info */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="space-y-8"
-          >
-            <div>
-              <h3 className={`text-2xl font-bold mb-6 ${
-                darkMode 
-                  ? 'bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent' 
-                  : 'text-gray-900'
-              }`}>
-                Let's Connect
-              </h3>
-              <div className="space-y-4">
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className={`flex items-center space-x-3 p-3 rounded-xl ${
-                    darkMode ? 'bg-white/5' : 'bg-white/30'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg ${
-                    darkMode ? 'bg-gradient-to-br from-primary-600 to-primary-500' : 'bg-gradient-to-br from-accent-700 to-primary-600'
-                  }`}>
-                    <EnvelopeIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>jackstealer690@gmail.com</span>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className={`flex items-center space-x-3 p-3 rounded-xl ${
-                    darkMode ? 'bg-white/5' : 'bg-white/30'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg ${
-                    darkMode ? 'bg-gradient-to-br from-primary-500 to-primary-600' : 'bg-gradient-to-br from-primary-700 to-accent-700'
-                  }`}>
-                    <PhoneIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>+91 9258298892</span>
-                </motion.div>
-                <motion.div 
-                  whileHover={{ x: 5 }}
-                  className={`flex items-center space-x-3 p-3 rounded-xl ${
-                    darkMode ? 'bg-white/5' : 'bg-white/30'
-                  }`}
-                >
-                  <div className={`p-2 rounded-lg ${
-                    darkMode ? 'bg-gradient-to-br from-primary-600 to-accent-700' : 'bg-gradient-to-br from-accent-700 to-primary-600'
-                  }`}>
-                    <MapPinIcon className="h-5 w-5 text-white" />
-                  </div>
-                  <span className={darkMode ? 'text-cream-500' : 'text-primary-800'}>India</span>
-                </motion.div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-white' : 'text-primary-800'
-              }`}>
-                Follow Me
-              </h4>
-              <div className="flex space-x-4">
-                {socialLinks.map((link) => (
-                  <motion.a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.1, y: -3 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${
-                      darkMode 
-                        ? 'bg-white/5 backdrop-blur-xl border border-white/10' 
-                        : 'bg-white/40 backdrop-blur-xl border border-white/20'
-                    }`}
-                  >
-                    <span className="text-2xl">{link.icon}</span>
-                  </motion.a>
-                ))}
-              </div>
-            </div>
-
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className={`p-6 rounded-2xl ${
-                darkMode 
-                  ? 'bg-gradient-to-br from-primary-600/10 to-primary-500/10 border border-primary-600/20' 
-                  : 'bg-gradient-to-br from-accent-700/10 to-primary-600/10 border border-accent-700/30'
-              }`}
-            >
-              <h4 className={`text-lg font-semibold mb-2 ${
-                darkMode ? 'text-white' : 'text-primary-800'
-              }`}>
-                Available for Work
-              </h4>
-              <p className={darkMode ? 'text-cream-500' : 'text-primary-700'}>
-                I'm currently available for freelance projects and full-time opportunities. 
-                Let's create something amazing together!
-              </p>
-            </motion.div>
-          </motion.div>
+          <p className="mt-10 inline-flex items-center gap-3 text-sm text-gray-400">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:hidden" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Available for freelance projects and full-time roles
+          </p>
         </div>
+
+        <motion.form
+          onSubmit={handleSubmit}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="space-y-5 self-start rounded-[20px] border border-white/[0.06] bg-panel p-7 lg:p-10"
+        >
+          {fields.map((f) => (
+            <div key={f.name}>
+              <label htmlFor={f.name} className="mb-2 block text-xs uppercase tracking-[0.2em] text-muted">
+                {f.label}
+              </label>
+              <input
+                id={f.name}
+                name={f.name}
+                type={f.type || 'text'}
+                value={formData[f.name]}
+                onChange={handleChange}
+                required
+                placeholder={f.placeholder}
+                className={inputClass}
+              />
+            </div>
+          ))}
+          <div>
+            <label htmlFor="message" className="mb-2 block text-xs uppercase tracking-[0.2em] text-muted">
+              Message
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              rows={5}
+              placeholder="Tell me about your project..."
+              className={`${inputClass} resize-none`}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white font-medium text-ink transition hover:bg-gray-200 disabled:opacity-60"
+          >
+            {isLoading ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
+                Sending...
+              </>
+            ) : (
+              <>
+                Send message <ArrowUpRightIcon className="h-4 w-4" />
+              </>
+            )}
+          </button>
+        </motion.form>
       </div>
     </section>
   );

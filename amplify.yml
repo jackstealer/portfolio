@@ -1,0 +1,17 @@
+# AWS Amplify Hosting build settings, picked up automatically when the GitHub repo is connected.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
