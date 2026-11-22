@@ -1,7 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { motion, MotionConfig, useReducedMotion, Transition } from 'framer-motion';
+import { motion, Transition } from 'framer-motion';
 import { ArrowDownLeftIcon } from '@heroicons/react/24/outline';
 import ParticleField from './ParticleField';
+import Magnetic from './Magnetic';
 
 const NAME = 'ATUL';
 const WORD = 'PORTFOLIO';
@@ -84,7 +85,6 @@ interface HeroProps {
 }
 
 const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
-  const reduced = useReducedMotion();
   const [clock, setClock] = useState(-1); // time of the latest cue fired
   const at = (t: number) => clock >= t;
   const heroRef = useRef<HTMLElement>(null);
@@ -229,55 +229,54 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
   }
 
   return (
-    // The app-wide MotionConfig honours reduced motion; the intro opts out so it always plays.
-    <MotionConfig reducedMotion="never">
-      <section
-        ref={heroRef}
-        id="home"
-        className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-end overflow-hidden bg-ink pb-[6vh]"
-      >
-        {/* Spotlight; it pulses as the dot lands. */}
+    <section
+      ref={heroRef}
+      id="home"
+      className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-end overflow-hidden bg-ink pb-[6vh]"
+    >
+      {/* Spotlight; it pulses as the dot lands. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: at(0) ? [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] : 0 }}
+        transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
+      />
+
+      <ParticleField start={at(T.particles)} />
+
+      <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
+        <motion.h1
+          ref={wordRef}
+          aria-label="Atul Raj Gautam, Portfolio"
+          className={`whitespace-nowrap text-center ${WORD_SIZE} font-black leading-none tracking-[-0.02em]`}
+          style={{ opacity: offset === null ? 0 : 1 }}
+          initial={false}
+          animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
+          transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
+        >
+          {/* Zero-width space keeps the line box (and the measured centre) before the first letter appears. */}
+          <span aria-hidden>{slots.length ? slots : '​'}</span>
+        </motion.h1>
+
         <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: at(0) ? [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] : 0 }}
-          transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
-        />
-
-        <ParticleField start={at(T.particles)} reduced={!!reduced} />
-
-        <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
-          <motion.h1
-            ref={wordRef}
-            aria-label="Atul Raj Gautam, Portfolio"
-            className={`whitespace-nowrap text-center ${WORD_SIZE} font-black leading-none tracking-[-0.02em]`}
-            style={{ opacity: offset === null ? 0 : 1 }}
-            initial={false}
-            animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
-            transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
-          >
-            {/* Zero-width space keeps the line box (and the measured centre) before the first letter appears. */}
-            <span aria-hidden>{slots.length ? slots : '​'}</span>
-          </motion.h1>
-
-          <motion.div
-            // Fixed to the final word's width, so it neither widens the block nor re-wraps (moving the word) mid-intro.
-            className={`mt-3 flex max-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5 ${WORD_SIZE}`}
-            style={{ width: `${wordWidth}em` }}
-            initial={false}
-            animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-            transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
-              <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
-              <span className="font-light italic text-gray-200">Developer</span>
-            </p>
-            <div className="flex items-center gap-3">
+          // Fixed to the final word's width, so it neither widens the block nor re-wraps (moving the word) mid-intro.
+          className={`mt-3 flex max-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5 ${WORD_SIZE}`}
+          style={{ width: `${wordWidth}em` }}
+          initial={false}
+          animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
+            <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
+            <span className="font-light italic text-gray-200">Developer</span>
+          </p>
+          <div className="flex items-center gap-3">
+            <Magnetic>
               <button
                 type="button"
                 aria-label="Scroll to about"
@@ -286,6 +285,8 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
               >
                 <ArrowDownLeftIcon className="h-4 w-4" />
               </button>
+            </Magnetic>
+            <Magnetic>
               <button
                 type="button"
                 onClick={() => scrollTo('contact')}
@@ -293,11 +294,11 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
               >
                 Contact
               </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    </MotionConfig>
+            </Magnetic>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUpIcon } from '@heroicons/react/24/outline';
+import Magnetic from './Magnetic';
 
 const Footer: React.FC = () => (
   <footer className="border-t border-white/[0.07] px-6 py-10 lg:px-11">
@@ -10,16 +11,18 @@ const Footer: React.FC = () => (
           © {new Date().getFullYear()} Atul Raj Gautam. Building the future, one line of code at a time.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="inline-flex items-center gap-3 text-sm text-gray-400 transition-colors hover:text-white"
-      >
-        Back to top
-        <span className="grid h-10 w-10 place-items-center rounded-full border border-white/15">
-          <ArrowUpIcon className="h-4 w-4" />
-        </span>
-      </button>
+      <Magnetic>
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="inline-flex items-center gap-3 text-sm text-gray-400 transition-colors hover:text-white"
+        >
+          Back to top
+          <span className="grid h-10 w-10 place-items-center rounded-full border border-white/15">
+            <ArrowUpIcon className="h-4 w-4" />
+          </span>
+        </button>
+      </Magnetic>
     </div>
   </footer>
 );

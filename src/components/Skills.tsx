@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import SectionHeading from './SectionHeading';
 
-const skillCategories = [
+export const skillCategories = [
   { title: 'Languages', skills: ['Python', 'C / C++', 'JavaScript (ES6+)', 'TypeScript'] },
   { title: 'Frontend', skills: ['React.js', 'Next.js', 'HTML5', 'CSS3', 'Tailwind CSS'] },
   { title: 'Backend', skills: ['Node.js', 'Express.js', 'REST API', 'GraphQL (basic)', 'Socket.io'] },

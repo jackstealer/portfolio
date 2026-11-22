@@ -1,7 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useSpring } from 'framer-motion';
 import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import SectionHeading from './SectionHeading';
+import Magnetic from './Magnetic';
 
 const projects = [
   {
@@ -86,6 +87,50 @@ const projects = [
   },
 ];
 
+const TILT_SPRING = { stiffness: 150, damping: 15 };
+
+// Tilts toward the mouse with a soft light that follows it across the card; stays flat for touch.
+const TiltCard: React.FC<{ children: React.ReactNode; index: number }> = ({ children, index }) => {
+  const ref = useRef<HTMLElement>(null);
+  const rotateX = useSpring(0, TILT_SPRING);
+  const rotateY = useSpring(0, TILT_SPRING);
+  const onMove = (e: React.PointerEvent<HTMLElement>) => {
+    const el = ref.current;
+    if (e.pointerType !== 'mouse' || !el) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    rotateY.set((x - 0.5) * 10);
+    rotateX.set((0.5 - y) * 8);
+    el.style.setProperty('--mx', `${x * 100}%`);
+    el.style.setProperty('--my', `${y * 100}%`);
+  };
+
+  return (
+    <motion.article
+      ref={ref}
+      onPointerMove={onMove}
+      onPointerLeave={() => {
+        rotateX.set(0);
+        rotateY.set(0);
+      }}
+      style={{ rotateX, rotateY, transformPerspective: 1000 }}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.7, delay: (index % 2) * 0.08, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative flex flex-col overflow-hidden rounded-[20px] border border-white/[0.06] bg-panel transition-colors duration-300 hover:border-white/15"
+    >
+      {children}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{ background: 'radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.08), transparent 45%)' }}
+      />
+    </motion.article>
+  );
+};
+
 const Projects: React.FC = () => (
   <section id="projects" className="relative px-6 py-28 lg:px-10 lg:py-40">
     <div className="mx-auto max-w-[1150px]">
@@ -99,14 +144,7 @@ const Projects: React.FC = () => (
 
       <div className="grid gap-5 md:grid-cols-2">
         {projects.map((p, i) => (
-          <motion.article
-            key={p.title}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.7, delay: (i % 2) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="group flex flex-col overflow-hidden rounded-[20px] border border-white/[0.06] bg-panel"
-          >
+          <TiltCard key={p.title} index={i}>
             <div className="relative aspect-[16/10] overflow-hidden">
               <img
                 src={p.image}
@@ -136,27 +174,31 @@ const Projects: React.FC = () => (
                 ))}
               </div>
               <div className="flex gap-5 text-sm">
-                <a
-                  href={p.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-white transition-opacity hover:opacity-70"
-                >
-                  Code <ArrowUpRightIcon className="h-3.5 w-3.5" />
-                </a>
-                {p.liveDemo !== p.github && (
+                <Magnetic>
                   <a
-                    href={p.liveDemo}
+                    href={p.github}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-white transition-opacity hover:opacity-70"
                   >
-                    Live <ArrowUpRightIcon className="h-3.5 w-3.5" />
+                    Code <ArrowUpRightIcon className="h-3.5 w-3.5" />
                   </a>
+                </Magnetic>
+                {p.liveDemo !== p.github && (
+                  <Magnetic>
+                    <a
+                      href={p.liveDemo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-white transition-opacity hover:opacity-70"
+                    >
+                      Live <ArrowUpRightIcon className="h-3.5 w-3.5" />
+                    </a>
+                  </Magnetic>
                 )}
               </div>
             </div>
-          </motion.article>
+          </TiltCard>
         ))}
       </div>
     </div>

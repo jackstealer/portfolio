@@ -38,6 +38,16 @@ body {
   }
 }
 
+/* Custom cursor (components/Cursor) replaces the pointer on mouse devices; text fields keep the I-beam. */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+html.custom-cursor input,
+html.custom-cursor textarea {
+  cursor: text !important;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

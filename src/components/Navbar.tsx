@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence, useScroll } from 'framer-motion';
+import Magnetic from './Magnetic';
 
 const navItems = ['Home', 'About', 'Skills', 'Projects', 'Contact'];
 
@@ -59,18 +60,20 @@ const Navbar: React.FC<{ visible: boolean }> = ({ visible }) => {
             const id = name.toLowerCase();
             return (
               <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => go(id)}
-                  className={`relative pb-1 text-[13px] font-medium uppercase tracking-[0.06em] transition-colors ${
-                    active === id ? 'text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {name}
-                  {active === id && (
-                    <motion.span layoutId="nav-underline" className="absolute inset-x-0 -bottom-1 h-px bg-white" />
-                  )}
-                </button>
+                <Magnetic strength={0.4}>
+                  <button
+                    type="button"
+                    onClick={() => go(id)}
+                    className={`relative pb-1 text-[13px] font-medium uppercase tracking-[0.06em] transition-colors ${
+                      active === id ? 'text-white' : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {name}
+                    {active === id && (
+                      <motion.span layoutId="nav-underline" className="absolute inset-x-0 -bottom-1 h-px bg-white" />
+                    )}
+                  </button>
+                </Magnetic>
               </li>
             );
           })}

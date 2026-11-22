@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 import SectionHeading from './SectionHeading';
+import Magnetic from './Magnetic';
 
 // Set REACT_APP_CONTACT_API at build time to point the form at a deployed endpoint.
 const CONTACT_API = process.env.REACT_APP_CONTACT_API || '/api/contact';
@@ -96,15 +97,16 @@ const Contact: React.FC = () => {
 
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
             {socialLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white"
-              >
-                {link.name} <ArrowUpRightIcon className="h-3.5 w-3.5" />
-              </a>
+              <Magnetic key={link.name}>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white"
+                >
+                  {link.name} <ArrowUpRightIcon className="h-3.5 w-3.5" />
+                </a>
+              </Magnetic>
             ))}
           </div>
 
