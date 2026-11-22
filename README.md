@@ -1,57 +1,62 @@
-# Getting Started with Create React App
+# Atul Raj Gautam: Portfolio
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+My personal portfolio: a dark, motion-heavy single page about my work in AI/ML and full-stack development.
 
-## Deploying to AWS (Amplify Hosting)
+**Live:** https://main.d3etp1e0iklzm8.amplifyapp.com
 
-The site is static, so it is hosted on AWS Amplify, which builds it with the settings in `amplify.yml`.
+## Features
 
-1. Push this repo to GitHub.
-2. In the AWS console open **Amplify → Create new app → GitHub**, authorise it, pick this repo and the `main` branch, and keep the detected build settings.
-3. Amplify gives you a `https://main.<id>.amplifyapp.com` URL. Every push to `main` redeploys. Custom domains live under **Hosting → Custom domains**.
+- **Animated intro.** A dot drops in and becomes the stem of a "!", the letters of my name spill out and tumble into place, and then the name flips letter by letter into **PORTFOLIO** before it settles into the hero. It plays on every visit. Any click, key press, scroll or touch skips it.
+- **Interactive particle globe** behind the hero. It spins slowly and its particles move away from your pointer.
+- **Custom cursor**: a dot with a trailing ring that grows when you hover something clickable (desktop only).
+- **Magnetic links and buttons** that lean toward the pointer.
+- **3D tilt project cards** with a highlight that follows the cursor.
+- **Skills ticker**: two rows that scroll in opposite directions and pause when off-screen.
+- **Section headings** that reveal letter by letter as you scroll.
+- **Contact form** with toast feedback.
+- Responsive. On touch devices the custom cursor is turned off.
 
-The contact form posts to `/api/contact`, which a static host does not serve. To make it work, deploy an endpoint for it and set
-`REACT_APP_CONTACT_API` to its URL under **Hosting → Environment variables**, then redeploy.
+## Tech stack
 
-## Available Scripts
+React 18 · TypeScript · Tailwind CSS 3 · Framer Motion · Create React App (`react-scripts` 5) · hosted on AWS Amplify
 
-In the project directory, you can run:
+## Run locally
 
-### `npm start`
+Requires Node 18 or newer (see `.nvmrc`).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+npm install
+npm start        # http://localhost:3000
+npm test         # runs the tests
+npm run build    # production build into build/
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+`npm run build` uses Unix-style env syntax (`CI=false ...`). On Windows, run `npx react-scripts build` instead.
 
-### `npm test`
+## Project structure
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+src/
+  App.tsx                  page shell: mounts the cursor and the sections
+  components/
+    Hero.tsx               intro animation and hero
+    ParticleField.tsx      canvas particle globe
+    Navbar.tsx  About.tsx  Skills.tsx  Marquee.tsx
+    Projects.tsx  Contact.tsx  Footer.tsx
+    Cursor.tsx  Magnetic.tsx  SectionHeading.tsx
+public/                    index.html, icons, manifest
+amplify.yml                AWS Amplify build settings
+```
 
-### `npm run build`
+`client/` and `server/` hold the previous version of the site and its Express contact backend. Neither is part of the current build.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Deployment (AWS Amplify)
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The site is static. AWS Amplify builds it using `amplify.yml` (`npm ci`, then `npm run build`, which serves `build/`).
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. In the AWS console, open **Amplify → Create new app → GitHub**, choose this repo and the `main` branch, and keep the detected build settings.
+2. Every push to `main` redeploys automatically. Add custom domains under **Hosting → Custom domains**.
 
-### `npm run eject`
+### Contact form
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+The form posts to `/api/contact` by default, and a static host does not serve that route. To make it work, deploy an endpoint for it, set `REACT_APP_CONTACT_API` to that endpoint's URL under **Hosting → Environment variables**, and redeploy.
