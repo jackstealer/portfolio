@@ -5,7 +5,7 @@ interface Props {
   reduced: boolean; // prefers-reduced-motion: the sphere appears already formed, no swarm or shimmer
 }
 
-const TARGET_PARTICLES = 7000;
+const TARGET_PARTICLES = 4500;
 const ASSEMBLE = 1.6; // seconds for one particle to fly home
 const LEVELS = 8; // brightness steps
 const LIGHT = (() => {
@@ -41,6 +41,7 @@ const ParticleField: React.FC<Props> = ({ start, reduced }) => {
     let ty = new Float32Array(0);
     let delay = new Float32Array(0);
     let bucketEnd: number[] = []; // particles are grouped by colour so each colour is set once per frame
+    let cache: HTMLCanvasElement | null = null; // the formed sphere, drawn once and reused every frame
 
     // Grey and blue-grey steps, sampled from the reference look.
     const styles: string[] = [];
@@ -56,12 +57,12 @@ const ParticleField: React.FC<Props> = ({ start, reduced }) => {
     }
 
     const build = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // One canvas pixel per CSS pixel: the square "pixels" don't need hi-dpi, and fill cost grows with dpr².
       W = canvas.clientWidth;
       H = canvas.clientHeight;
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      canvas.width = W;
+      canvas.height = H;
+      cache = null;
 
       const count = Math.round((W * H) / 4500);
       stars = new Float32Array(count * 4);
@@ -114,10 +115,9 @@ const ParticleField: React.FC<Props> = ({ start, reduced }) => {
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (window.scrollY > H * 1.1) return; // hero is off-screen
-      ctx.clearRect(0, 0, W, H);
       const s = startedAt.current;
-      if (s === null) return; // waits for its cue in the hero intro
+      if (s === null || window.scrollY > H * 1.1) return; // not cued yet, or hero off-screen
+      ctx.clearRect(0, 0, W, H);
       const t = reduced ? Infinity : (now - s) / 1000; // reduced motion: appears already formed, no swarm
       const fadeIn = Math.min(1, t / 0.8);
       const scatter = Math.min(1, window.scrollY / (H * 0.75));
@@ -128,21 +128,47 @@ const ParticleField: React.FC<Props> = ({ start, reduced }) => {
         ctx.globalAlpha = stars[i + 2] * fadeIn * twinkle;
         ctx.fillRect(stars[i], stars[i + 1], 1.2, 1.2);
       }
+      ctx.globalAlpha = 1;
 
+      // Formed and not scrolled: blit the cached sphere and dim a few random cells for the shimmer,
+      // instead of redrawing thousands of squares every frame.
+      if (t >= 0.8 + ASSEMBLE && scatter === 0) {
+        if (!cache) {
+          cache = document.createElement('canvas');
+          cache.width = W;
+          cache.height = H;
+          const c = cache.getContext('2d');
+          if (c) drawParticles(c, Infinity, 0, 1, false);
+        }
+        ctx.drawImage(cache, 0, 0);
+        if (!reduced) {
+          ctx.fillStyle = 'rgba(2,4,4,0.65)';
+          for (let j = 0, m = tx.length * 0.015; j < m; j++) {
+            const i = (Math.random() * tx.length) | 0;
+            ctx.fillRect(tx[i], ty[i], cell - 1, cell - 1);
+          }
+        }
+      } else {
+        drawParticles(ctx, t, scatter, fadeIn, !reduced);
+      }
+    };
+
+    // Particles fly from their scattered home to the sphere as k goes 0 -> 1 (scrolling pulls k back down).
+    const drawParticles = (c: CanvasRenderingContext2D, t: number, scatter: number, fade: number, shimmer: boolean) => {
       let i = 0;
       for (let b = 0; b < bucketEnd.length; b++) {
-        ctx.fillStyle = styles[b];
+        c.fillStyle = styles[b];
         for (; i < bucketEnd[b]; i++) {
           const p = Math.min(1, Math.max(0, (t - delay[i]) / ASSEMBLE));
           const k = (1 - Math.pow(1 - p, 3)) * (1 - scatter);
           const size = 1.4 + (cell - 2.4) * k; // dust speck -> cell minus a 1px gap
-          let a = (0.3 + 0.7 * k) * fadeIn;
-          if (!reduced && Math.random() < 0.015) a *= 0.35; // shimmer
-          ctx.globalAlpha = a;
-          ctx.fillRect(hx[i] + (tx[i] - hx[i]) * k, hy[i] + (ty[i] - hy[i]) * k, size, size);
+          let a = (0.3 + 0.7 * k) * fade;
+          if (shimmer && Math.random() < 0.015) a *= 0.35;
+          c.globalAlpha = a;
+          c.fillRect(hx[i] + (tx[i] - hx[i]) * k, hy[i] + (ty[i] - hy[i]) * k, size, size);
         }
       }
-      ctx.globalAlpha = 1;
+      c.globalAlpha = 1;
     };
 
     const onResize = () => {

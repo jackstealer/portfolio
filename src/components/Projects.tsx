@@ -163,4 +163,5 @@ const Projects: React.FC = () => (
   </section>
 );
 
-export default Projects;
+// memo: App re-renders when the intro finishes; static sections needn't.
+export default React.memo(Projects);

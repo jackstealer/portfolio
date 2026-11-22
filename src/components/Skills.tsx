@@ -49,4 +49,5 @@ const Skills: React.FC = () => (
   </section>
 );
 
-export default Skills;
+// memo: App re-renders when the intro finishes; static sections needn't.
+export default React.memo(Skills);

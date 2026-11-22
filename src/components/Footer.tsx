@@ -24,4 +24,5 @@ const Footer: React.FC = () => (
   </footer>
 );
 
-export default Footer;
+// memo: App re-renders when the intro finishes; static sections needn't.
+export default React.memo(Footer);

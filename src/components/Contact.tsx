@@ -179,4 +179,5 @@ const Contact: React.FC = () => {
   );
 };
 
-export default Contact;
+// memo: App re-renders when the intro finishes; static sections needn't.
+export default React.memo(Contact);

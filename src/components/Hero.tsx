@@ -30,6 +30,7 @@ const morphAt = (i: number) => T.morph + i * MORPH_STAGGER;
 
 const CUES = Array.from(
   new Set([
+    0, // the dot starts falling
     T.stem, T.spill, T.right, T.bang, T.settle, T.particles, T.done,
     ...Array.from(NAME, (_, i) => enterAt(i)),
     ...Array.from(WORD, (_, i) => morphAt(i)),
@@ -46,8 +47,9 @@ const TUMBLE = {
   right: { x: '170%', y: '-110%', rotate: 200, scale: 0.6 },
 };
 const TUMBLE_REST = { x: '0%', y: '0%', rotate: 0, scale: 1 };
-const SPRING: Transition = { type: 'spring', stiffness: 170, damping: 17 };
+const SPRING = { type: 'spring', stiffness: 170, damping: 17 } as const;
 const EASE: [number, number, number, number] = [0.76, 0, 0.24, 1];
+const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const DOT_Y = ['-120vh', '0vh', '-26vh', '0vh', '-9vh', '0vh', '-2.5vh', '0vh'];
 const DOT_BOUNCE: Transition = {
@@ -120,9 +122,21 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
       setClock(Infinity);
       onIntroDone();
     };
-    ids = CUES.map((t) => window.setTimeout(() => (t === T.done ? finish() : setClock(t)), t * 1000));
+    // Start once the font is in and the page's first layout/paint work is done; otherwise the dot stutters
+    // through that busy first half-second.
+    const begin = () => {
+      if (finished) return;
+      ids = CUES.map((t) => window.setTimeout(() => (t === T.done ? finish() : setClock(t)), t * 1000));
+    };
+    const whenIdle = (cb: () => void) =>
+      typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(cb, { timeout: 600 }) : window.setTimeout(cb, 100);
+    Promise.race([
+      document.fonts ? Promise.all([document.fonts.load('900 1em Inter'), document.fonts.load('italic 300 1em Inter')]) : null,
+      new Promise((resolve) => window.setTimeout(resolve, 2500)),
+    ]).then(() => whenIdle(begin));
     skipEvents.forEach((e) => window.addEventListener(e, finish, { passive: true }));
     return () => {
+      finished = true;
       ids.forEach(clearTimeout);
       skipEvents.forEach((e) => window.removeEventListener(e, finish));
     };
@@ -152,7 +166,7 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
   for (let i = 0; i < Math.max(NAME.length, WORD.length); i++) {
     const morphed = at(morphAt(i));
     const visible =
-      i < NAME.length ? (i === STEM || at(enterAt(i))) && (i < WORD.length || !morphed) : morphed;
+      i < NAME.length ? (i === STEM ? at(0) : at(enterAt(i))) && (i < WORD.length || !morphed) : morphed;
     if (!visible) continue;
     const char = morphed ? WORD[i] : NAME[i];
     const from = i >= NAME.length ? 'grow' : i < STEM ? 'left' : i > STEM ? 'right' : null;
@@ -164,7 +178,8 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
         className="relative inline-block"
         initial={from ? { width: '0em', opacity: from === 'grow' ? 0 : 1 } : false}
         animate={{ width: widthOf(isStem && !at(T.bang) ? '!' : char), opacity: 1 }}
-        transition={SPRING}
+        // A short tween, not the spring: width changes re-lay out the whole word every frame.
+        transition={{ default: SPRING, width: { duration: 0.35, ease: EASE_OUT } }}
       >
         <motion.span
           className="inline-block"
@@ -230,7 +245,7 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
               'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
           }}
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] }}
+          animate={{ opacity: at(0) ? [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] : 0 }}
           transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
         />
 
@@ -246,7 +261,8 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
             animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
             transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
           >
-            <span aria-hidden>{slots}</span>
+            {/* Zero-width space keeps the line box (and the measured centre) before the first letter appears. */}
+            <span aria-hidden>{slots.length ? slots : '​'}</span>
           </motion.h1>
 
           <motion.div
