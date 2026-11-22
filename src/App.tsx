@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+import Backdrop from './components/Backdrop';
 import Cursor from './components/Cursor';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -16,7 +17,9 @@ function App() {
 
   // Animations play for everyone, including visitors with reduced motion on (the owner's choice).
   return (
-    <div className="min-h-screen bg-ink text-gray-200">
+    // No background here: html/body paint the ink, so the Backdrop layer (z -10) can show above it.
+    <div className="min-h-screen text-gray-200">
+      <Backdrop />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -28,6 +31,8 @@ function App() {
       <Navbar visible={introDone} />
       <main>
         <Hero onIntroDone={() => setIntroDone(true)} />
+        {/* Softens the edge where the solid-black hero meets the textured backdrop. */}
+        <div aria-hidden className="pointer-events-none relative -mb-48 h-48 bg-gradient-to-b from-ink to-transparent" />
         <About />
         <Marquee />
         <Skills />

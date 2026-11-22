@@ -38,7 +38,7 @@ const Marquee: React.FC = () => {
   }, []);
 
   return (
-    <section ref={ref} aria-label="Skills" className="relative space-y-2 overflow-hidden border-y border-white/[0.06] py-10">
+    <section ref={ref} aria-label="Skills" className="relative space-y-2 overflow-hidden border-y border-white/[0.06] bg-ink py-10">
       <Row running={running} />
       <Row reverse outline running={running} />
       {/* Edge fades as overlays: a CSS mask here forced the moving bands to be re-composited every frame. */}

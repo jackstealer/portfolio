@@ -14,3 +14,16 @@ class IntersectionObserverStub {
   }
 }
 (window as any).IntersectionObserver = IntersectionObserverStub;
+
+// jsdom has no matchMedia; GSAP's ScrollTrigger and gsap.matchMedia need one.
+window.matchMedia = (query: string) =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent: () => false,
+  } as MediaQueryList);

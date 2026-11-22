@@ -1,8 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, Transition } from 'framer-motion';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowDownLeftIcon } from '@heroicons/react/24/outline';
 import ParticleField from './ParticleField';
 import Magnetic from './Magnetic';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const NAME = 'ATUL';
 const WORD = 'PORTFOLIO';
@@ -90,6 +94,9 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
   const heroRef = useRef<HTMLElement>(null);
   const blockRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLHeadingElement>(null);
+  const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const exitRef = useRef(0); // scroll-exit progress, read by the globe every frame
   const [offset, setOffset] = useState<number | null>(null);
   const [widths, setWidths] = useState<Record<string, number>>({});
 
@@ -161,6 +168,54 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
     return () => ro?.disconnect();
   }, []);
 
+  // Scroll exit, once the intro is over: the hero pins (desktop), PORTFOLIO splits apart and lifts away, the
+  // subtitle and buttons slide off, and the globe (via exitRef) flies past the camera. GSAP only touches the
+  // plain wrapper elements, never framer's motion elements.
+  const done = clock === Infinity;
+  useLayoutEffect(() => {
+    const hero = heroRef.current;
+    if (!done || !hero) return;
+    const ctx = gsap.context(() => {
+      gsap.matchMedia().add({ desktop: '(min-width: 768px)', mobile: '(max-width: 767px)' }, (mm) => {
+        const desktop = Boolean(mm.conditions?.desktop);
+        const letters = gsap.utils.toArray<HTMLElement>('[data-exit-letter]', hero);
+        const mid = (letters.length - 1) / 2;
+        const tl = gsap.timeline({
+          defaults: { ease: 'power2.in' },
+          onUpdate: () => (exitRef.current = tl.progress()),
+          scrollTrigger: {
+            trigger: hero,
+            start: 'top top',
+            end: desktop ? '+=90%' : 'bottom top',
+            pin: desktop,
+            scrub: 0.6,
+            refreshPriority: 1, // it adds pin spacing, so measure it before the sections below
+          },
+        });
+        tl.to({}, { duration: 1 }, 0) // timeline length 1, so the globe zoom spans the whole scroll
+          .to(
+            letters,
+            {
+              xPercent: (i) => (i - mid) * 45,
+              yPercent: (i) => -70 - Math.abs(i - mid) * 28,
+              rotation: (i) => (i - mid) * 8,
+              opacity: 0,
+              duration: 0.55,
+              stagger: { each: 0.035, from: 'center' },
+            },
+            0
+          )
+          .to(subtitleRef.current, { x: -90, opacity: 0, duration: 0.4 }, 0)
+          .to(ctaRef.current, { x: 90, opacity: 0, duration: 0.4 }, 0);
+      });
+    }, hero);
+    ScrollTrigger.refresh();
+    return () => {
+      ctx.revert();
+      exitRef.current = 0;
+    };
+  }, [done]);
+
   const settled = at(T.settle);
   const slots: React.ReactNode[] = [];
   for (let i = 0; i < Math.max(NAME.length, WORD.length); i++) {
@@ -187,11 +242,14 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
           animate={TUMBLE_REST}
           transition={SPRING}
         >
-          {isStem && !at(T.bang) ? (
-            <span className="invisible">!</span>
-          ) : (
-            <Glyph key={char} char={char} flip={morphed || isStem} axis={isStem && !morphed ? 'y' : 'x'} />
-          )}
+          {/* Plain wrapper for the GSAP scroll exit; only letters of the final word take part. */}
+          <span className="inline-block" data-exit-letter={i < WORD.length ? '' : undefined}>
+            {isStem && !at(T.bang) ? (
+              <span className="invisible">!</span>
+            ) : (
+              <Glyph key={char} char={char} flip={morphed || isStem} axis={isStem && !morphed ? 'y' : 'x'} />
+            )}
+          </span>
         </motion.span>
 
         {/* The "!": a dot that bounces in, then a stem that drops onto it. Two copies of the glyph, clipped at the
@@ -247,7 +305,7 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
         transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
       />
 
-      <ParticleField start={at(T.particles)} />
+      <ParticleField start={at(T.particles)} exit={exitRef} />
 
       <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
         <motion.h1
@@ -271,11 +329,11 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
           animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
           transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
+          <p ref={subtitleRef} className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
             <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
             <span className="font-light italic text-gray-200">Developer</span>
           </p>
-          <div className="flex items-center gap-3">
+          <div ref={ctaRef} className="flex items-center gap-3">
             <Magnetic>
               <button
                 type="button"
