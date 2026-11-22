@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion, Transition } from 'framer-motion';
+import { motion, MotionConfig, useReducedMotion, Transition } from 'framer-motion';
 import { ArrowDownLeftIcon } from '@heroicons/react/24/outline';
 import ParticleField from './ParticleField';
 
@@ -106,22 +106,28 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
   const widthOf = (ch: string) => `${widths[ch] ?? 0.7}em`;
   const wordWidth = Array.from(WORD).reduce((sum, ch) => sum + (widths[ch] ?? 0.7), 0);
 
-  // Fire each cue on schedule; reduced-motion visitors get the final frame straight away.
+  // Fire each cue on schedule. The intro plays for everyone (owner's choice, even with reduced motion on);
+  // any click, key, scroll or touch skips straight to the end.
   useEffect(() => {
-    if (reduced) {
+    const skipEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    let ids: number[] = [];
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      ids.forEach(clearTimeout);
+      skipEvents.forEach((e) => window.removeEventListener(e, finish));
       setClock(Infinity);
       onIntroDone();
-      return;
-    }
-    const ids = CUES.map((t) =>
-      window.setTimeout(() => {
-        setClock(t);
-        if (t === T.done) onIntroDone();
-      }, t * 1000)
-    );
-    return () => ids.forEach(clearTimeout);
+    };
+    ids = CUES.map((t) => window.setTimeout(() => (t === T.done ? finish() : setClock(t)), t * 1000));
+    skipEvents.forEach((e) => window.addEventListener(e, finish, { passive: true }));
+    return () => {
+      ids.forEach(clearTimeout);
+      skipEvents.forEach((e) => window.removeEventListener(e, finish));
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduced]);
+  }, []);
 
   // During the intro the word sits at the centre of the hero; measure how far that is from where it rests.
   useLayoutEffect(() => {
@@ -208,71 +214,74 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
   }
 
   return (
-    <section
-      ref={heroRef}
-      id="home"
-      className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-end overflow-hidden bg-ink pb-[6vh]"
-    >
-      {/* Spotlight; it pulses as the dot lands. */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
-        }}
-        initial={{ opacity: reduced ? 0.7 : 0 }}
-        animate={{ opacity: reduced ? 0.7 : [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] }}
-        transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
-      />
-
-      <ParticleField start={at(T.particles)} reduced={!!reduced} />
-
-      <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
-        <motion.h1
-          ref={wordRef}
-          aria-label="Atul Raj Gautam, Portfolio"
-          className={`whitespace-nowrap text-center ${WORD_SIZE} font-black leading-none tracking-[-0.02em]`}
-          style={{ opacity: offset === null ? 0 : 1 }}
-          initial={false}
-          animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
-          transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
-        >
-          <span aria-hidden>{slots}</span>
-        </motion.h1>
-
+    // The app-wide MotionConfig honours reduced motion; the intro opts out so it always plays.
+    <MotionConfig reducedMotion="never">
+      <section
+        ref={heroRef}
+        id="home"
+        className="relative flex h-[100svh] min-h-[560px] flex-col items-center justify-end overflow-hidden bg-ink pb-[6vh]"
+      >
+        {/* Spotlight; it pulses as the dot lands. */}
         <motion.div
-          // Fixed to the final word's width, so it neither widens the block nor re-wraps (moving the word) mid-intro.
-          className={`mt-3 flex max-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5 ${WORD_SIZE}`}
-          style={{ width: `${wordWidth}em` }}
-          initial={false}
-          animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-          transition={{ duration: 0.8, delay: reduced ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
-            <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
-            <span className="font-light italic text-gray-200">Developer</span>
-          </p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Scroll to about"
-              onClick={() => scrollTo('about')}
-              className="grid h-11 w-11 place-items-center rounded-full border border-white/15 text-white transition hover:border-white/40 hover:bg-white/5"
-            >
-              <ArrowDownLeftIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollTo('contact')}
-              className="h-11 rounded-full border border-white/15 px-6 text-[15px] italic text-white transition hover:border-white/40 hover:bg-white/5"
-            >
-              Contact
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 38% 45% at 50% 50%, rgba(255,255,255,0.075), rgba(255,255,255,0.02) 55%, transparent 75%)',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.35, 1, 0.55, 0.85, 0.6, 0.7] }}
+          transition={{ duration: T.stem, times: [0, 0.36, 0.4, 0.55, 0.72, 0.88, 1] }}
+        />
+
+        <ParticleField start={at(T.particles)} reduced={!!reduced} />
+
+        <div ref={blockRef} className="relative z-10 flex max-w-full flex-col">
+          <motion.h1
+            ref={wordRef}
+            aria-label="Atul Raj Gautam, Portfolio"
+            className={`whitespace-nowrap text-center ${WORD_SIZE} font-black leading-none tracking-[-0.02em]`}
+            style={{ opacity: offset === null ? 0 : 1 }}
+            initial={false}
+            animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
+            transition={settled ? { duration: 1.1, ease: EASE } : { duration: 0 }}
+          >
+            <span aria-hidden>{slots}</span>
+          </motion.h1>
+
+          <motion.div
+            // Fixed to the final word's width, so it neither widens the block nor re-wraps (moving the word) mid-intro.
+            className={`mt-3 flex max-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5 ${WORD_SIZE}`}
+            style={{ width: `${wordWidth}em` }}
+            initial={false}
+            animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+            transition={{ duration: 0.8, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <p className="text-[clamp(1.05rem,2.1vw,2rem)] tracking-[-0.01em] text-white">
+              <span className="font-bold">AI/ML &amp; Full-Stack</span>{' '}
+              <span className="font-light italic text-gray-200">Developer</span>
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                aria-label="Scroll to about"
+                onClick={() => scrollTo('about')}
+                className="grid h-11 w-11 place-items-center rounded-full border border-white/15 text-white transition hover:border-white/40 hover:bg-white/5"
+              >
+                <ArrowDownLeftIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollTo('contact')}
+                className="h-11 rounded-full border border-white/15 px-6 text-[15px] italic text-white transition hover:border-white/40 hover:bg-white/5"
+              >
+                Contact
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </MotionConfig>
   );
 };
 

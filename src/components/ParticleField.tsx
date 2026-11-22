@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 interface Props {
   start: boolean; // begin gathering the dust into the sphere
-  reduced: boolean; // prefers-reduced-motion: show the finished sphere, no shimmer
+  reduced: boolean; // prefers-reduced-motion: the sphere appears already formed, no swarm or shimmer
 }
 
 const TARGET_PARTICLES = 7000;
@@ -117,8 +117,8 @@ const ParticleField: React.FC<Props> = ({ start, reduced }) => {
       if (window.scrollY > H * 1.1) return; // hero is off-screen
       ctx.clearRect(0, 0, W, H);
       const s = startedAt.current;
-      if (s === null && !reduced) return;
-      const t = reduced || s === null ? Infinity : (now - s) / 1000;
+      if (s === null) return; // waits for its cue in the hero intro
+      const t = reduced ? Infinity : (now - s) / 1000; // reduced motion: appears already formed, no swarm
       const fadeIn = Math.min(1, t / 0.8);
       const scatter = Math.min(1, window.scrollY / (H * 0.75));
 
