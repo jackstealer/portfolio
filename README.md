@@ -48,8 +48,6 @@ public/                    index.html, icons, manifest
 amplify.yml                AWS Amplify build settings
 ```
 
-`client/` and `server/` hold the previous version of the site and its Express contact backend. Neither is part of the current build.
-
 ## Deployment (AWS Amplify)
 
 The site is static. AWS Amplify builds it using `amplify.yml` (`npm ci`, then `npm run build`, which serves `build/`).
