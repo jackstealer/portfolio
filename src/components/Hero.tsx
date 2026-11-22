@@ -37,13 +37,15 @@ const CUES = Array.from(
 ).sort((a, b) => a - b);
 
 const TRACKING = -0.02; // em; must match the h1's tracking class
-const ENTRY = {
-  left: { width: '0em', opacity: 0, x: '0.9em', y: '-0.25em', rotate: -220, scale: 0.4 },
-  right: { width: '0em', opacity: 0, x: '1.2em', y: '-1.1em', rotate: 200, scale: 0.6 },
-  grow: { width: '0em', opacity: 0 },
+const WORD_SIZE = 'text-[clamp(3.4rem,12.6vw,13.5rem)]'; // h1 font size; the subtitle row is sized in the same em
+// Tumble-in offsets, in % of the letter's own box. Units framer can't type (em) make it measure the element first,
+// which briefly resets scale/rotate; the spring reads that jump as huge velocity and flings the letter to scale -2.5.
+// For the same reason the slot's em width animates on an outer span that has no scale/rotate.
+const TUMBLE = {
+  left: { x: '130%', y: '-25%', rotate: -220, scale: 0.4 },
+  right: { x: '170%', y: '-110%', rotate: 200, scale: 0.6 },
 };
-type Entry = keyof typeof ENTRY;
-const SETTLED = { opacity: 1, x: '0em', y: '0em', rotate: 0, scale: 1 };
+const TUMBLE_REST = { x: '0%', y: '0%', rotate: 0, scale: 1 };
 const SPRING: Transition = { type: 'spring', stiffness: 170, damping: 17 };
 const EASE: [number, number, number, number] = [0.76, 0, 0.24, 1];
 
@@ -102,6 +104,7 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
     });
   }, []);
   const widthOf = (ch: string) => `${widths[ch] ?? 0.7}em`;
+  const wordWidth = Array.from(WORD).reduce((sum, ch) => sum + (widths[ch] ?? 0.7), 0);
 
   // Fire each cue on schedule; reduced-motion visitors get the final frame straight away.
   useEffect(() => {
@@ -132,8 +135,10 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
     };
     measure();
     document.fonts?.ready.then(measure);
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    // The block changes size as the word grows (the hidden subtitle row re-wraps), and with the viewport.
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    [heroRef.current, blockRef.current].forEach((el) => el && ro?.observe(el));
+    return () => ro?.disconnect();
   }, []);
 
   const settled = at(T.settle);
@@ -144,22 +149,29 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
       i < NAME.length ? (i === STEM || at(enterAt(i))) && (i < WORD.length || !morphed) : morphed;
     if (!visible) continue;
     const char = morphed ? WORD[i] : NAME[i];
-    const from: Entry | null = i >= NAME.length ? 'grow' : i < STEM ? 'left' : i > STEM ? 'right' : null;
+    const from = i >= NAME.length ? 'grow' : i < STEM ? 'left' : i > STEM ? 'right' : null;
     const isStem = i === STEM;
 
     slots.push(
       <motion.span
         key={i}
         className="relative inline-block"
-        initial={from ? ENTRY[from] : false}
-        animate={{ ...SETTLED, width: widthOf(isStem && !at(T.bang) ? '!' : char) }}
+        initial={from ? { width: '0em', opacity: from === 'grow' ? 0 : 1 } : false}
+        animate={{ width: widthOf(isStem && !at(T.bang) ? '!' : char), opacity: 1 }}
         transition={SPRING}
       >
-        {isStem && !at(T.bang) ? (
-          <span className="invisible">!</span>
-        ) : (
-          <Glyph key={char} char={char} flip={morphed || isStem} axis={isStem && !morphed ? 'y' : 'x'} />
-        )}
+        <motion.span
+          className="inline-block"
+          initial={from === 'left' || from === 'right' ? TUMBLE[from] : false}
+          animate={TUMBLE_REST}
+          transition={SPRING}
+        >
+          {isStem && !at(T.bang) ? (
+            <span className="invisible">!</span>
+          ) : (
+            <Glyph key={char} char={char} flip={morphed || isStem} axis={isStem && !morphed ? 'y' : 'x'} />
+          )}
+        </motion.span>
 
         {/* The "!": a dot that bounces in, then a stem that drops onto it. Two copies of the glyph, clipped at the
             gap between stem (0.14-0.64em) and dot (0.68-0.87em) in Inter Black's line box. */}
@@ -220,7 +232,7 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
         <motion.h1
           ref={wordRef}
           aria-label="Atul Raj Gautam, Portfolio"
-          className="whitespace-nowrap text-center text-[clamp(3.4rem,12.6vw,13.5rem)] font-black leading-none tracking-[-0.02em]"
+          className={`whitespace-nowrap text-center ${WORD_SIZE} font-black leading-none tracking-[-0.02em]`}
           style={{ opacity: offset === null ? 0 : 1 }}
           initial={false}
           animate={settled ? { y: 0, scale: 1 } : { y: offset ?? 0, scale: INTRO_SCALE }}
@@ -230,8 +242,9 @@ const Hero: React.FC<HeroProps> = ({ onIntroDone }) => {
         </motion.h1>
 
         <motion.div
-          // w-0 min-w-full: span the word's width without widening the block
-          className="mt-3 flex w-0 min-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5"
+          // Fixed to the final word's width, so it neither widens the block nor re-wraps (moving the word) mid-intro.
+          className={`mt-3 flex max-w-full flex-wrap items-center justify-between gap-x-8 gap-y-4 pl-[1.6%] pr-[7%] lg:mt-5 ${WORD_SIZE}`}
+          style={{ width: `${wordWidth}em` }}
           initial={false}
           animate={settled ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
           transition={{ duration: 0.8, delay: reduced ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
